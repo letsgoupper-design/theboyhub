@@ -1,25 +1,100 @@
 local P_BOSS, N_BOSS, FarmAtivo, TempoBoss = Vector3.new(3450.6, 4.2, 8.2), "Holy Wyrm", true, 4
 local LP, TS = game:GetService("Players").LocalPlayer, game:GetService("TweenService")
 local P_LOBBY = (LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")) and LP.Character.HumanoidRootPart.Position or Vector3.new(0, 5, 0)
+
+-- Interface Gráfica
 local SG = Instance.new("ScreenGui", game:GetService("CoreGui") or LP:WaitForChild("PlayerGui")) SG.Name, SG.ResetOnSpawn = "MECUI", false
 local MF = Instance.new("Frame", SG) MF.BackgroundColor3, MF.Size, MF.Position, MF.Active, MF.Draggable = Color3.fromRGB(10,10,12), UDim2.new(0,220,0,190), UDim2.new(0.05,0,0.35,0), true, true
 local C_MF = Instance.new("UICorner", MF) C_MF.CornerRadius = UDim.new(0,10)
 local TL = Instance.new("Frame", MF) TL.BackgroundColor3, TL.Size = Color3.fromRGB(0,255,100), UDim2.new(1,0,0,4)
 local C_TL = Instance.new("UICorner", TL) C_TL.CornerRadius = UDim.new(0,10)
+
 local Title = Instance.new("TextLabel", MF) Title.BackgroundTransparency, Title.Position, Title.Size, Title.Font, Title.Text, Title.TextColor3, Title.TextSize = 1, UDim2.new(0,0,0.05,0), UDim2.new(1,0,0,25), Enum.Font.GothamBold, "⚡ USER: "..LP.DisplayName.." ⚡", Color3.fromRGB(0,255,100), 13
 local Sub = Instance.new("TextLabel", MF) Sub.BackgroundTransparency, Sub.Position, Sub.Size, Sub.Font, Sub.Text, Sub.TextColor3, Sub.TextSize = 1, UDim2.new(0,0,0.18,0), UDim2.new(1,0,0,15), Enum.Font.Gotham, "Holy Wyrm Auto Farm", Color3.fromRGB(120,120,130), 11
+
+-- Botão de Ativar/Desativar
 local BT = Instance.new("TextButton", MF) BT.BackgroundColor3, BT.Position, BT.Size, BT.Font, BT.Text, BT.TextColor3, BT.TextSize = Color3.fromRGB(0,180,70), UDim2.new(0.1,0,0.32,0), UDim2.new(0,176,0,32), Enum.Font.GothamBold, "FARM: ATIVADO", Color3.fromRGB(255,255,255), 12
 local C_BT = Instance.new("UICorner", BT) C_BT.CornerRadius = UDim.new(0,6)
 local BS = Instance.new("UIStroke", BT) BS.Color, BS.Thickness = Color3.fromRGB(0,255,100), 1
+
+BT.MouseButton1Click:Connect(function() 
+    FarmAtivo = not FarmAtivo 
+    if FarmAtivo then 
+        BT.Text = "FARM: ATIVADO" 
+        TS:Create(BT, TweenInfo.new(0.25), {BackgroundColor3 = Color3.fromRGB(0,180,70)}):Play() 
+        TS:Create(BS, TweenInfo.new(0.25), {Color = Color3.fromRGB(0,255,100)}):Play() 
+    else 
+        BT.Text = "FARM: DESATIVADO" 
+        TS:Create(BT, TweenInfo.new(0.25), {BackgroundColor3 = Color3.fromRGB(40,40,45)}):Play() 
+        TS:Create(BS, TweenInfo.new(0.25), {Color = Color3.fromRGB(70,70,75)}):Play() 
+    end 
+end)
+
+-- Sistema do Slider (Barra de Segundos)
 local SB = Instance.new("Frame", MF) SB.Name, SB.BackgroundColor3, SB.Position, SB.Size = "SliderBg", Color3.fromRGB(30,30,35), UDim2.new(0.1,0,0.58,0), UDim2.new(0,176,0,18)
 local C_SB = Instance.new("UICorner", SB) C_SB.CornerRadius = UDim.new(0,4)
 local SF = Instance.new("Frame", SB) SF.Name, SF.BackgroundColor3, SF.Size = "SliderFill", Color3.fromRGB(0,255,100), UDim2.new(0.15,0,1,0)
 local C_SF = Instance.new("UICorner", SF) C_SF.CornerRadius = UDim.new(0,4)
 local SL = Instance.new("TextLabel", SB) SL.BackgroundTransparency, SL.Size, SL.Font, SL.Text, SL.TextColor3, SL.TextSize = 1, UDim2.new(1,0,1,0), Enum.Font.GothamBold, "Tempo no Boss: 4s", Color3.fromRGB(255,255,255), 10
 local Cr = Instance.new("TextLabel", MF) Cr.BackgroundTransparency, Cr.Position, Cr.Size, Cr.Font, Cr.Text, Cr.TextColor3, Cr.TextSize = 1, UDim2.new(0,0,0.82,0), UDim2.new(1,0,0,20), Enum.Font.GothamSemibold, "Criador: TheBoy2K", Color3.fromRGB(80,80,90), 10
-BT.MouseButton1Click:Connect(function() FarmAtivo = not FarmAtivo if FarmAtivo then BT.Text = "FARM: ATIVADO" TS:Create(BT, TweenInfo.new(0.25), {BackgroundColor3 = Color3.fromRGB(0,180,70)}):Play() TS:Create(BS, TweenInfo.new(0.25), {Color = Color3.fromRGB(0,255,100)}):Play() else BT.Text = "FARM: DESATIVADO" TS:Create(BT, TweenInfo.new(0.25), {BackgroundColor3 = Color3.fromRGB(40,40,45)}):Play() TS:Create(BS, TweenInfo.new(0.25), {Color = Color3.fromRGB(70,70,75)}):Play() end end)
-local dragging = false local function updateSlider(input) local pos = math.clamp((input.Position.X - SB.AbsolutePosition.X) / SB.AbsoluteSize.X, 0, 1) TempoBoss = math.floor(1 + (pos * 19)) SF.Size = UDim2.new(pos, 0, 1, 0) SL.Text = "Tempo no Boss: " .. TempoBoss .. "s" end
+
+local dragging = false 
+local function updateSlider(input) 
+    local pos = math.clamp((input.Position.X - SB.AbsolutePosition.X) / SB.AbsoluteSize.X, 0, 1) 
+    TempoBoss = math.floor(1 + (pos * 19)) 
+    SF.Size = UDim2.new(pos, 0, 1, 0) 
+    SL.Text = "Tempo no Boss: " .. TempoBoss .. "s" 
+end
+
 SB.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = true updateSlider(input) end end)
 game:GetService("UserInputService").InputChanged:Connect(function(input) if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then updateSlider(input) end end)
 game:GetService("UserInputService").InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end end)
-task.spawn(function() while true do task.wait(0.1) if FarmAtivo then pcall(function() local char = LP.Character or LP.CharacterAdded:Wait() local root = char:WaitForChild("HumanoidRootPart", 5) if root then root.CFrame = CFrame.new(P_LOBBY) task.wait(2) if not FarmAtivo then return end char = LP.Character or LP.CharacterAdded:Wait() root = char:WaitForChild("HumanoidRootPart", 5) if root then root.CFrame = CFrame.new(P_BOSS) local t = tick() while tick() - t < TempoBoss and FarmAtivo do task.wait(0.02) local cC = LP.Character local rC = cC and cC:FindFirstChild("HumanoidRootPart") local hC = cC and cC:FindFirstChild("Humanoid") if rC and hC and hC.Health > 0 then rC.CFrame = CFrame.new(P_BOSS) local tl = LP.Backpack:FindFirstChildOfClass("Tool") or cC:FindFirstChildOfClass("Tool") if tl then if tl.Parent ~= cC then hC:EquipTool(tl) end tl:Activate() end end end end end end) end end end)
+
+-- Loop Principal Autofarm
+task.spawn(function() 
+    while true do 
+        task.wait(0.5) 
+        if FarmAtivo then 
+            pcall(function() 
+                local char = LP.Character or LP.CharacterAdded:Wait() 
+                local root = char:WaitForChild("HumanoidRootPart", 5) 
+                
+                if root then 
+                    -- Vai pro lobby esperar
+                    root.CFrame = CFrame.new(P_LOBBY) 
+                    task.wait(2) 
+                    
+                    if not FarmAtivo then return end 
+                    
+                    -- Teleporta pro Boss
+                    char = LP.Character or LP.CharacterAdded:Wait() 
+                    root = char:WaitForChild("HumanoidRootPart", 5) 
+                    
+                    if root then 
+                        root.CFrame = CFrame.new(P_BOSS) 
+                        local t = tick() 
+                        
+                        -- Fica batendo até acabar o tempo ajustado no slider
+                        while (tick() - t < TempoBoss) and FarmAtivo do 
+                            task.wait(0.05) 
+                            local cC = LP.Character 
+                            local rC = cC and cC:FindFirstChild("HumanoidRootPart") 
+                            local hC = cC and cC:FindFirstChild("Humanoid") 
+                            
+                            if rC and hC and hC.Health > 0 then 
+                                rC.CFrame = CFrame.new(P_BOSS) 
+                                local tl = LP.Backpack:FindFirstChildOfClass("Tool") or cC:FindFirstChildOfClass("Tool") 
+                                if tl then 
+                                    if tl.Parent ~= cC then hC:EquipTool(tl) end 
+                                    tl:Activate() 
+                                end 
+                            else
+                                break
+                            end 
+                        end 
+                    end 
+                end 
+            end) 
+        end 
+    end 
+end)
